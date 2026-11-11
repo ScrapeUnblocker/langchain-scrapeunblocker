@@ -187,6 +187,23 @@ def test_google_search_lists_results_overview_and_extras() -> None:
     assert msg.artifact is SERP
 
 
+def test_google_search_waits_for_full_urls_only_when_asked() -> None:
+    tool = make(ScrapeUnblockerGoogleSearch)
+    call(tool, {"query": "item"})
+    call(tool, {"query": "item", "full_urls": True})
+    assert [c[2]["full_urls"] for c in tool._client.calls] == [False, True]
+    assert "full_urls" in tool.description
+
+
+async def test_google_search_full_urls_async() -> None:
+    tool = make(ScrapeUnblockerGoogleSearch)
+    msg = await tool.ainvoke(
+        {"name": tool.name, "args": {"query": "item", "full_urls": True}, "id": "1", "type": "tool_call"}
+    )
+    assert "1. [Item](https://shop.example/item)" in msg.content
+    assert tool._aclient.calls[-1][2]["full_urls"] is True
+
+
 def test_google_search_no_results() -> None:
     msg = call(make(ScrapeUnblockerGoogleSearch), {"query": "nothing"})
     assert "no results" in msg.content

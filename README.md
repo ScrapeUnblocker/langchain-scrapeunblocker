@@ -36,7 +36,7 @@ print(result["messages"][-1].content)
 |------|---------------------|--------------|--------|
 | `ScrapeUnblockerMarkdown` | `scrapeunblocker_markdown` | A page as clean Markdown (main content, absolute links) | 1 request |
 | `ScrapeUnblockerSearchAndRead` | `scrapeunblocker_search_and_read` | Google search plus the top 1-5 results read as Markdown, in one call | 1 + 1 per page |
-| `ScrapeUnblockerGoogleSearch` | `scrapeunblocker_google_search` | Organic results, AI Overview, People also ask, related searches | 1 per result page |
+| `ScrapeUnblockerGoogleSearch` | `scrapeunblocker_google_search` | Organic results, AI Overview, People also ask, related searches; `full_urls` for every result's exact URL | 1 per result page |
 | `ScrapeUnblockerParsedData` | `scrapeunblocker_parsed_data` | Structured JSON from a product, article or listing page | 1 request |
 | `ScrapeUnblockerListPlugins` | `scrapeunblocker_list_plugins` | Search the catalog of 100+ site scrapers | free |
 | `ScrapeUnblockerRunPlugin` | `scrapeunblocker_run_plugin` | Run a site scraper and get its JSON | per plugin |
@@ -64,6 +64,8 @@ msg = ScrapeUnblockerGoogleSearch().invoke(
 msg.content    # what the model reads
 msg.artifact   # the whole results page: ads, knowledge panel, local, shopping, videos...
 ```
+
+Google gives out a results page's links a few at a time, the last ones up to about 40 seconds after the search. By default `ScrapeUnblockerGoogleSearch` returns sooner, and a result whose link has not come yet has the site's home page as its URL (or a Google redirect link when Google shows no site). With `full_urls=True` it waits for every result's real URL, which takes up to about 40 seconds longer and is billed the same. The model sees this argument and is told to set it when it needs the exact URL of every result, for example to cite or open them. `ScrapeUnblockerSearchAndRead` reads only the top results, whose links come first, so it does not wait.
 
 Every tool takes an optional `proxy_country` (ISO code such as `"US"` or `"DE"`) to make the request from that country, and works with `ainvoke` too.
 

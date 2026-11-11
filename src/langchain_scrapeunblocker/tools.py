@@ -258,6 +258,15 @@ class GoogleSearchInput(BaseModel):
         description="Optional ISO country code to search from, e.g. 'US'. Google localises results to it.",
     )
     pages: int = Field(default=1, ge=1, le=5, description="How many result pages to fetch (1-5, default 1).")
+    full_urls: bool = Field(
+        default=False,
+        description=(
+            "Wait until Google gives out every result's real URL; the search then takes up to about "
+            "40 seconds longer. Set it when you need the exact URL of every result, e.g. to cite or "
+            "open them. Leave it off for quick answers: a result whose link has not come yet then "
+            "points at the site's home page. Billed the same."
+        ),
+    )
 
 
 class ScrapeUnblockerGoogleSearch(ScrapeUnblockerBaseTool):
@@ -279,7 +288,8 @@ class ScrapeUnblockerGoogleSearch(ScrapeUnblockerBaseTool):
         "Search Google and get the results: titles, real URLs and snippets of the organic "
         "results, Google's AI Overview when there is one, People also ask questions and related "
         "searches. Use it to find pages or check what ranks for a query; follow up with "
-        "scrapeunblocker_markdown to read a result. Billed as one request per result page."
+        "scrapeunblocker_markdown to read a result. Set full_urls when you need the exact URL "
+        "of every result. Billed as one request per result page."
     )
     args_schema: Type[BaseModel] = GoogleSearchInput
     response_format: str = "content_and_artifact"
@@ -289,10 +299,11 @@ class ScrapeUnblockerGoogleSearch(ScrapeUnblockerBaseTool):
         query: str,
         proxy_country: Optional[str] = None,
         pages: int = 1,
+        full_urls: bool = False,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Tuple[str, Any]:
         try:
-            serp = self.client.serp(query, proxy_country=proxy_country, pages_to_check=pages)
+            serp = self.client.serp(query, proxy_country=proxy_country, pages_to_check=pages, full_urls=full_urls)
         except ScrapeUnblockerError as err:
             raise self._fail(err) from err
         return _serp_text(query, serp), serp
@@ -302,10 +313,13 @@ class ScrapeUnblockerGoogleSearch(ScrapeUnblockerBaseTool):
         query: str,
         proxy_country: Optional[str] = None,
         pages: int = 1,
+        full_urls: bool = False,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> Tuple[str, Any]:
         try:
-            serp = await self.aclient.serp(query, proxy_country=proxy_country, pages_to_check=pages)
+            serp = await self.aclient.serp(
+                query, proxy_country=proxy_country, pages_to_check=pages, full_urls=full_urls
+            )
         except ScrapeUnblockerError as err:
             raise self._fail(err) from err
         return _serp_text(query, serp), serp
